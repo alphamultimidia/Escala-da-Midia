@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Escala da Mídia</title>
+<style>
+:root{
+  --bg:#f6f5f2;--card:#ffffff;--card2:#efeee9;--text:#1f1f1d;--muted:#6b6a65;
+  --border:rgba(0,0,0,.12);--accent-bg:#e3eefb;--accent-text:#0c447c;--accent:#378add;
+  --lead-bg:#eeedfe;--lead-text:#3c3489;--ok-bg:#eaf3de;--ok-text:#27500a;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#1b1b19;--card:#262624;--card2:#2f2f2c;--text:#f1efe8;--muted:#a3a29b;
+    --border:rgba(255,255,255,.15);--accent-bg:#0c447c;--accent-text:#b5d4f4;--accent:#85b7eb;
+    --lead-bg:#3c3489;--lead-text:#cecbf6;--ok-bg:#27500a;--ok-text:#c0dd97;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5}
+.wrap{max-width:760px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;font-weight:500;margin:0 0 2px}
+.sub{color:var(--muted);font-size:14px;margin:0 0 18px}
+button,select,textarea{font:inherit;color:var(--text);background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer}
+button:hover,select:hover{border-color:var(--muted)}
+.nav{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+.nav select{flex:1;min-width:0}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.chip{border-radius:999px;padding:5px 14px;font-size:14px}
+.chip.on{background:var(--accent-bg);color:var(--accent-text);border-color:var(--accent)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.stat{background:var(--card2);border-radius:8px;padding:14px}
+.stat p{margin:0}.stat .l{font-size:13px;color:var(--muted)}.stat .v{font-size:24px;font-weight:500}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+.card.hit{border:2px solid var(--accent)}
+.card.off{background:var(--card2)}
+.head{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
+.day{font-size:24px;font-weight:500}.dow{font-size:13px;color:var(--muted)}
+.row{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;font-size:15px}
+.row.me{background:var(--accent-bg);color:var(--accent-text);font-weight:500}
+.row.dim{color:var(--muted)}
+.av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex:none;background:hsl(var(--h) 70% 90%);color:hsl(var(--h) 60% 25%)}
+@media (prefers-color-scheme:dark){.av{background:hsl(var(--h) 40% 25%);color:hsl(var(--h) 70% 85%)}}
+.tag{margin-left:auto;font-size:11px;padding:2px 8px;border-radius:8px;background:var(--lead-bg);color:var(--lead-text)}
+.tag.next{background:var(--ok-bg);color:var(--ok-text);margin-left:auto}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:16px}
+#msg{font-size:13px;color:var(--muted)}
+#ta{display:none;width:100%;margin-top:10px;font-size:14px;cursor:text}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Escala da Mídia</h1>
+  <p class="sub">Todo domingo: 1 líder e 2 apoios. Novembro de 2026 a dezembro de 2027.</p>
+
+  <div class="nav">
+    <button id="prev" aria-label="Mês anterior">&#8249;</button>
+    <select id="mes" aria-label="Escolher mês"></select>
+    <button id="next" aria-label="Próximo mês">&#8250;</button>
+  </div>
+
+  <div id="chips" class="chips" role="group" aria-label="Filtrar por pessoa"></div>
+  <div id="stats" class="stats"></div>
+  <div id="cards" class="cards"></div>
+
+  <div class="actions">
+    <button id="copy">Copiar mês para WhatsApp</button>
+    <span id="msg"></span>
+  </div>
+  <textarea id="ta" rows="8" readonly></textarea>
+</div>
+
+<script>
+const P={Wellington:270,Enzo:175,'João':215,Andrei:25,Alefe:130,Lays:320};
+const LEAD=['Wellington','Enzo','João'];
+const CYC=[
+  ['Wellington',['Andrei','Alefe']],
+  ['Enzo',['Lays','João']],
+  ['João',['Andrei','Lays']],
+  ['Wellington',['Alefe','Enzo']],
+  ['Enzo',['Lays','Wellington']],
+  ['João',['Andrei','Alefe']]
+];
+const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+const S=[];
+for(let i=0;i<58;i++){
+  S.push({d:new Date(Date.UTC(2026,10,22+i*7)),l:CYC[i%6][0],a:CYC[i%6][1]});
+}
+const M=[];
+S.forEach(s=>{
+  const y=s.d.getUTCFullYear(),m=s.d.getUTCMonth();
+  if(!M.some(x=>x.y===y&&x.m===m))M.push({y,m});
+});
+
+const now=new Date();
+const todayU=Date.UTC(now.getFullYear(),now.getMonth(),now.getDate());
+const nextS=S.find(s=>s.d.getTime()>=todayU);
+let mi=0,sel='';
+if(nextS){
+  mi=M.findIndex(x=>x.y===nextS.d.getUTCFullYear()&&x.m===nextS.d.getUTCMonth());
+  if(mi<0)mi=0;
+}
+
+const p2=n=>String(n).padStart(2,'0');
+const $=id=>document.getElementById(id);
+const mesSel=$('mes');
+M.forEach((x,i)=>{
+  const o=document.createElement('option');
+  o.value=i;o.textContent=MESES[x.m]+' de '+x.y;
+  mesSel.appendChild(o);
+});
+const chips=$('chips');
+['',...Object.keys(P)].forEach(n=>{
+  const b=document.createElement('button');
+  b.className='chip';b.textContent=n||'Todos';b.dataset.n=n;
+  b.onclick=()=>{sel=n;render();};
+  chips.appendChild(b);
+});
+
+function av(n){return `<span class="av" style="--h:${P[n]}">${n.slice(0,2).toUpperCase()}</span>`;}
+function rowHtml(n,isLead){
+  let c='row';
+  if(sel&&n===sel)c+=' me';else if(sel)c+=' dim';
+  const tag=isLead?'<span class="tag">Líder</span>':'';
+  return `<div class="${c}">${av(n)}<span>${n}</span>${tag}</div>`;
+}
+function monthList(){
+  const x=M[mi];
+  return S.filter(s=>s.d.getUTCFullYear()===x.y&&s.d.getUTCMonth()===x.m);
+}
+function serves(s,n){return s.l===n||s.a.includes(n);}
+function metric(l,v){return `<div class="stat"><p class="l">${l}</p><p class="v">${v}</p></div>`;}
+
+function render(){
+  const list=monthList();
+  mesSel.value=mi;
+  $('prev').style.visibility=mi===0?'hidden':'visible';
+  $('next').style.visibility=mi===M.length-1?'hidden':'visible';
+  chips.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.n===sel));
+
+  $('cards').innerHTML=list.map(s=>{
+    const hit=!sel||serves(s,sel);
+    let cls='card';
+    if(sel&&hit)cls+=' hit';
+    if(sel&&!hit)cls+=' off';
+    const isNext=nextS&&s.d.getTime()===nextS.d.getTime();
+    const badge=isNext?'<span class="tag next">Próximo</span>':'';
+    return `<div class="${cls}">
+      <div class="head">
+        <span class="day">${p2(s.d.getUTCDate())}</span>
+        <span class="dow">dom · ${MESES[s.d.getUTCMonth()].slice(0,3).toLowerCase()}</span>${badge}
+      </div>
+      ${rowHtml(s.l,true)}${s.a.map(n=>rowHtml(n,false)).join('')}
+    </div>`;
+  }).join('');
+
+  let st=metric('Domingos no mês',list.length);
+  if(sel){
+    const mine=list.filter(s=>serves(s,sel)).length;
+    const tot=S.filter(s=>serves(s,sel)).length;
+    const lead=S.filter(s=>s.l===sel).length;
+    st=metric(sel+' no mês',mine)+metric('Total no período',tot)+metric('Como líder',LEAD.includes(sel)?lead:'—');
+  }else{
+    st+=metric('Domingos no período',S.length)+metric('Ciclo de rodízio','6 semanas');
+  }
+  $('stats').innerHTML=st;
+  $('msg').textContent='';
+  $('ta').style.display='none';
+}
+
+function texto(){
+  const x=M[mi];
+  let t=`*Escala da Mídia - ${MESES[x.m]}/${x.y}*\n`;
+  monthList().forEach(s=>{
+    t+=`\n${p2(s.d.getUTCDate())}/${p2(s.d.getUTCMonth()+1)} (dom)\nLíder: ${s.l}\nApoio: ${s.a.join(', ')}\n`;
+  });
+  return t;
+}
+
+$('prev').onclick=()=>{if(mi>0){mi--;render();}};
+$('next').onclick=()=>{if(mi<M.length-1){mi++;render();}};
+mesSel.onchange=()=>{mi=+mesSel.value;render();};
+$('copy').onclick=()=>{
+  const t=texto();
+  const fb=()=>{
+    const ta=$('ta');ta.value=t;ta.style.display='block';ta.focus();ta.select();
+    $('msg').textContent='Selecione e copie o texto abaixo.';
+  };
+  try{navigator.clipboard.writeText(t).then(()=>{$('msg').textContent='Copiado';},fb);}
+  catch(e){fb();}
+};
+render();
+</script>
+</body>
+</html>
