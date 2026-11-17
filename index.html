@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="google" content="notranslate">
+<meta name="theme-color" content="#000000">
 <title>Escala da Mídia</title>
 <script>
 /* Mostra qualquer erro do script em uma faixa vermelha no topo da página */
@@ -16,62 +18,59 @@ window.addEventListener('error',function(e){
 </script>
 <style>
 :root{
-  --bg:#f6f5f2;--card:#ffffff;--card2:#efeee9;--text:#1f1f1d;--muted:#6b6a65;
-  --border:rgba(0,0,0,.12);--accent-bg:#e3eefb;--accent-text:#0c447c;--accent:#378add;
-  --lead-bg:#eeedfe;--lead-text:#3c3489;--ok-bg:#eaf3de;--ok-text:#27500a;
-  --tr-bg:#faeeda;--tr-text:#633806;--ce-bg:#e1f5ee;--ce-text:#085041;
-}
-@media (prefers-color-scheme:dark){
-  :root{
-    --bg:#1b1b19;--card:#262624;--card2:#2f2f2c;--text:#f1efe8;--muted:#a3a29b;
-    --border:rgba(255,255,255,.15);--accent-bg:#0c447c;--accent-text:#b5d4f4;--accent:#85b7eb;
-    --lead-bg:#3c3489;--lead-text:#cecbf6;--ok-bg:#27500a;--ok-text:#c0dd97;
-    --tr-bg:#633806;--tr-text:#fac775;--ce-bg:#085041;--ce-text:#9fe1cb;
-  }
+  color-scheme:dark;
+  --bg:#000000;--card:#0e0e0e;--card2:#181818;--text:#f5f5f5;--muted:#a3a3a3;
+  --border:rgba(255,255,255,.16);--verde:#62ff1c;--verde-bg:rgba(98,255,28,.14);
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5}
 .wrap{max-width:760px;margin:0 auto;padding:20px 16px 40px}
-h1{font-size:22px;font-weight:500;margin:0 0 2px}
+.topo{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+.logo{width:60px;height:60px;border-radius:50%;object-fit:cover;flex:none;display:block}
+.logo[hidden]{display:none}
+h1{font-size:22px;font-weight:500;margin:0}
 .sub{color:var(--muted);font-size:14px;margin:0 0 18px}
-button,select,textarea{font:inherit;color:var(--text);background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer}
-button:hover,select:hover{border-color:var(--muted)}
+button,select{font:inherit;color:var(--text);background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer}
+button:hover,select:hover{border-color:var(--verde)}
 .nav{display:flex;gap:8px;align-items:center;margin-bottom:12px}
 .nav select{flex:1;min-width:0}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
-.chip{border-radius:999px;padding:5px 14px;font-size:14px}
-.chip.on{background:var(--accent-bg);color:var(--accent-text);border-color:var(--accent)}
+.chip{border-radius:999px;padding:5px 14px;font-size:14px;background:transparent;color:var(--verde);border:1px solid var(--verde)}
+.chip:hover{background:var(--verde-bg)}
+.chip.on{background:var(--verde);color:#000;border-color:var(--verde);font-weight:500}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
 .stat{background:var(--card2);border-radius:8px;padding:14px}
-.stat p{margin:0}.stat .l{font-size:13px;color:var(--muted)}.stat .v{font-size:24px;font-weight:500}
+.stat p{margin:0}.stat .l{font-size:13px;color:var(--muted)}.stat .v{font-size:24px;font-weight:500;color:var(--verde)}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
-.card.hit{border:2px solid var(--accent)}
+.card.hit{border:2px solid var(--verde)}
 .card.off{background:var(--card2)}
 .head{display:flex;align-items:baseline;gap:8px;margin-bottom:8px;flex-wrap:wrap}
 .day{font-size:24px;font-weight:500}.dow{font-size:13px;color:var(--muted)}
 .badges{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap}
 .row{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;font-size:15px}
-.row.me{background:var(--accent-bg);color:var(--accent-text);font-weight:500}
+.row.me{background:var(--verde);color:#000;font-weight:500}
 .row.dim{color:var(--muted)}
-.av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex:none;background:hsl(var(--h) 70% 90%);color:hsl(var(--h) 60% 25%)}
-@media (prefers-color-scheme:dark){.av{background:hsl(var(--h) 40% 25%);color:hsl(var(--h) 70% 85%)}}
-.tag{margin-left:auto;font-size:11px;padding:2px 8px;border-radius:8px;background:var(--lead-bg);color:var(--lead-text)}
+.av{width:34px;height:34px;border-radius:50%;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex:none;background:hsl(var(--h) 45% 22%);color:hsl(var(--h) 75% 85%)}
+.av img{width:100%;height:100%;object-fit:cover;display:block}
+.tag{margin-left:auto;font-size:11px;padding:2px 8px;border-radius:8px;background:var(--verde);color:#000;font-weight:500}
 .badges .tag{margin-left:0}
-.tag.next{background:var(--ok-bg);color:var(--ok-text)}
-.tag.train{background:var(--tr-bg);color:var(--tr-text)}
-.tag.ceia{background:var(--ce-bg);color:var(--ce-text)}
-.tag.mentor{background:var(--card2);color:var(--muted);border:1px solid var(--border)}
+.tag.next{background:var(--verde-bg);color:var(--verde);font-weight:400}
+.tag.train{background:transparent;color:var(--verde);border:1px solid var(--verde);font-weight:400}
+.tag.ceia{background:#ffffff;color:#000}
+.tag.mentor{background:#222;color:#bdbdbd;border:1px solid var(--border);font-weight:400}
+.row.me .tag{background:#000;color:var(--verde)}
+.row.me .tag.mentor{background:#000;color:#fff;border-color:#000}
 .folga{font-size:13px;color:var(--muted);margin:6px 0 0 6px}
-.swap{margin-top:12px;width:100%;font-size:13px;padding:6px 10px}
-.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:16px}
-#msg{font-size:13px;color:var(--muted)}
-#ta{display:none;width:100%;margin-top:10px;font-size:14px;cursor:text}
+.versao{font-size:12px;color:var(--muted);margin-top:24px}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Escala da Mídia</h1>
+  <div class="topo">
+    <img id="logo" class="logo" alt="Logo" hidden>
+    <h1>Escala da Mídia</h1>
+  </div>
   <p class="sub">Todo domingo: 1 líder e 2 apoios. Primeiro domingo do mês: Santa Ceia, com equipe ampliada. Último domingo do mês: quem está em formação assume a liderança, acompanhado por um mentor. Novembro de 2026 a dezembro de 2027.</p>
 
   <div class="nav">
@@ -84,19 +83,13 @@ button:hover,select:hover{border-color:var(--muted)}
   <div id="stats" class="stats"></div>
   <div id="cards" class="cards"></div>
 
-  <div class="actions">
-    <button id="copy">Copiar mês para WhatsApp</button>
-    <button id="wa">Falar no WhatsApp</button>
-    <span id="msg"></span>
-  </div>
-  <textarea id="ta" rows="8" readonly></textarea>
+  <p class="versao">Versão de 17/11/2026 (tema preto e verde)</p>
 </div>
 
 <script>
 (function(){
 
 /* ===== CONFIGURAÇÕES (edite aqui) ===== */
-var WHATS='5591980108918';   /* WhatsApp que recebe os pedidos de troca: 55 + DDD + número, só dígitos */
 var CEIA_PADRAO=5;           /* pessoas na Santa Ceia, líder incluso: 4, 5 ou 6 */
 var CEIA_TAM={               /* exceções por data, no formato 'AAAA-MM-DD':pessoas. Exemplo: '2027-01-03':6 */
 };
@@ -116,10 +109,17 @@ var CYC=[
 ];
 var MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
+/* Fotos: Wellington.jpg, Enzo.jpg, João.jpg, Andrei.jpg, Alefe.jpg, Lays.jpg (na mesma pasta do index.html).
+   Logo: logo.png (ou logo.jpg, logo.jpeg, logo.svg, logo.webp) na mesma pasta.
+   A página tenta várias formas de escrever o nome. Se o arquivo não existir, nada quebra. */
+var FOTO={};
+var EXTS=['jpg','jpeg','png','webp','JPG','JPEG','PNG'];
+var EXTS_LOGO=['png','jpg','jpeg','svg','webp','PNG','JPG','JPEG','SVG'];
+
 function p2(n){return String(n).padStart(2,'0');}
 function el(id){return document.getElementById(id);}
 function dkey(s){return s.d.toISOString().slice(0,10);}
-function fdata(s){return p2(s.d.getUTCDate())+'/'+p2(s.d.getUTCMonth()+1)+'/'+s.d.getUTCFullYear();}
+function semAcento(s){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
 
 /* ----- 1) Rodízio base: todos os domingos ----- */
 var S=[];
@@ -218,6 +218,8 @@ var chips=el('chips');
 
 /* ----- 5) Desenho da tela ----- */
 function av(n){
+  var u=FOTO[n];
+  if(u)return '<span class="av"><img src="'+u+'" alt="'+n+'"></span>';
   return '<span class="av" style="--h:'+P[n]+'">'+n.slice(0,2).toUpperCase()+'</span>';
 }
 function rowHtml(n,kind){
@@ -268,7 +270,6 @@ function render(){
       +'<span class="badges">'+badges+'</span>'
       +'</div>'
       +rowHtml(s.l,'lead')+apoio+folga
-      +'<button class="swap" data-d="'+dkey(s)+'">Pedir troca</button>'
       +'</div>';
   }).join('');
 
@@ -285,71 +286,56 @@ function render(){
       +metric('Domingos de formação',S.filter(function(s){return s.treino;}).length);
   }
   el('stats').innerHTML=st;
-  el('msg').textContent='';
-  el('ta').style.display='none';
 }
 
-/* ----- 6) Texto para WhatsApp e pedido de troca ----- */
-function texto(){
-  var x=M[mi];
-  var t='*Escala da Mídia - '+MESES[x.m]+'/'+x.y+'*\n';
-  monthList().forEach(function(s){
-    t+='\n'+p2(s.d.getUTCDate())+'/'+p2(s.d.getUTCMonth()+1)+' (dom)\n';
-    if(s.ceia){
-      t+='*Santa Ceia*\nLíder: '+s.l+'\nEquipe: '+s.a.join(', ')+'\n';
-      if(s.folga.length)t+='Folga: '+s.folga.join(', ')+'\n';
-    }else if(s.treino){
-      var outro=s.a.filter(function(n){return n!==s.m;})[0];
-      t+='Líder em formação: '+s.l+'\nMentor: '+s.m+'\nApoio: '+outro+'\n';
-    }else{
-      t+='Líder: '+s.l+'\nApoio: '+s.a.join(', ')+'\n';
-    }
-  });
-  return t;
-}
-
-function abrirWa(msg){
-  if(!/^[0-9]{10,15}$/.test(WHATS)){
-    el('msg').textContent='Falta configurar o número do WhatsApp no código (linha WHATS).';
-    return;
-  }
-  window.open('https://wa.me/'+WHATS+'?text='+encodeURIComponent(msg),'_blank');
-}
-
-el('cards').onclick=function(e){
-  var b=e.target.closest('.swap');
-  if(!b)return;
-  var d=b.getAttribute('data-d');
-  var s=S.filter(function(x){return dkey(x)===d;})[0];
-  if(!s)return;
-  var tipo=s.ceia?' (Santa Ceia)':(s.treino?' (domingo de formação)':'');
-  abrirWa('Olá! Preciso de uma troca na escala da mídia.\n'
-    +'Data: '+fdata(s)+', domingo'+tipo+'\n'
-    +'Líder: '+s.l+'\n'
-    +'Equipe: '+s.a.join(', ')+'\n'
-    +'Meu nome: '+sel+'\n'
-    +'Motivo: ');
-};
-el('wa').onclick=function(){abrirWa('Olá! Preciso falar sobre a escala da mídia.');};
 el('prev').onclick=function(){if(mi>0){mi--;render();}};
 el('next').onclick=function(){if(mi<M.length-1){mi++;render();}};
 mesSel.onchange=function(){mi=Number(mesSel.value);render();};
-el('copy').onclick=function(){
-  var t=texto();
-  function fb(){
-    var ta=el('ta');
-    ta.value=t;
-    ta.style.display='block';
-    ta.focus();
-    ta.select();
-    el('msg').textContent='Selecione e copie o texto abaixo.';
+
+/* ----- 6) Carrega fotos e logo (tenta vários nomes/extensões) ----- */
+function achar(lista,ok,falha){
+  var k=0;
+  function tentar(){
+    if(k>=lista.length){if(falha)falha();return;}
+    var im=new Image();
+    im.onload=function(){ok(lista[k]);};
+    im.onerror=function(){k++;tentar();};
+    im.src=lista[k];
   }
-  try{
-    navigator.clipboard.writeText(t).then(function(){el('msg').textContent='Copiado';},fb);
-  }catch(err){fb();}
-};
+  tentar();
+}
+function montar(bases,exts){
+  var lista=[];
+  bases.forEach(function(b){
+    exts.forEach(function(x){
+      var nome=b+'.'+x;
+      if(lista.indexOf(nome)<0)lista.push(nome);
+    });
+  });
+  return lista;
+}
+function carregarFoto(n){
+  var base=semAcento(n).toLowerCase();
+  var cap=base.charAt(0).toUpperCase()+base.slice(1);
+  var lista=montar([cap,base,n.normalize('NFC'),n.normalize('NFD'),n.toLowerCase()],EXTS);
+  achar(lista,function(u){FOTO[n]=u;render();},function(){FOTO[n]='';});
+}
+function carregarLogo(){
+  var lista=montar(['logo','Logo'],EXTS_LOGO);
+  achar(lista,function(u){
+    var im=el('logo');
+    im.src=u;
+    im.hidden=false;
+    var ic=document.createElement('link');
+    ic.rel='icon';
+    ic.href=u;
+    document.head.appendChild(ic);
+  });
+}
 
 render();
+NOMES.forEach(carregarFoto);
+carregarLogo();
 
 })();
 </script>
