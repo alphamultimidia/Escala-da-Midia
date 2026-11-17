@@ -9,12 +9,14 @@
   --bg:#f6f5f2;--card:#ffffff;--card2:#efeee9;--text:#1f1f1d;--muted:#6b6a65;
   --border:rgba(0,0,0,.12);--accent-bg:#e3eefb;--accent-text:#0c447c;--accent:#378add;
   --lead-bg:#eeedfe;--lead-text:#3c3489;--ok-bg:#eaf3de;--ok-text:#27500a;
+  --tr-bg:#faeeda;--tr-text:#633806;--ce-bg:#e1f5ee;--ce-text:#085041;
 }
 @media (prefers-color-scheme:dark){
   :root{
     --bg:#1b1b19;--card:#262624;--card2:#2f2f2c;--text:#f1efe8;--muted:#a3a29b;
     --border:rgba(255,255,255,.15);--accent-bg:#0c447c;--accent-text:#b5d4f4;--accent:#85b7eb;
     --lead-bg:#3c3489;--lead-text:#cecbf6;--ok-bg:#27500a;--ok-text:#c0dd97;
+    --tr-bg:#633806;--tr-text:#fac775;--ce-bg:#085041;--ce-text:#9fe1cb;
   }
 }
 *{box-sizing:border-box}
@@ -32,19 +34,26 @@ button:hover,select:hover{border-color:var(--muted)}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
 .stat{background:var(--card2);border-radius:8px;padding:14px}
 .stat p{margin:0}.stat .l{font-size:13px;color:var(--muted)}.stat .v{font-size:24px;font-weight:500}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
 .card.hit{border:2px solid var(--accent)}
 .card.off{background:var(--card2)}
-.head{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
+.head{display:flex;align-items:baseline;gap:8px;margin-bottom:8px;flex-wrap:wrap}
 .day{font-size:24px;font-weight:500}.dow{font-size:13px;color:var(--muted)}
+.badges{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap}
 .row{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;font-size:15px}
 .row.me{background:var(--accent-bg);color:var(--accent-text);font-weight:500}
 .row.dim{color:var(--muted)}
 .av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex:none;background:hsl(var(--h) 70% 90%);color:hsl(var(--h) 60% 25%)}
 @media (prefers-color-scheme:dark){.av{background:hsl(var(--h) 40% 25%);color:hsl(var(--h) 70% 85%)}}
 .tag{margin-left:auto;font-size:11px;padding:2px 8px;border-radius:8px;background:var(--lead-bg);color:var(--lead-text)}
-.tag.next{background:var(--ok-bg);color:var(--ok-text);margin-left:auto}
+.badges .tag{margin-left:0}
+.tag.next{background:var(--ok-bg);color:var(--ok-text)}
+.tag.train{background:var(--tr-bg);color:var(--tr-text)}
+.tag.ceia{background:var(--ce-bg);color:var(--ce-text)}
+.tag.mentor{background:var(--card2);color:var(--muted);border:1px solid var(--border)}
+.folga{font-size:13px;color:var(--muted);margin:6px 0 0 6px}
+.swap{margin-top:12px;width:100%;font-size:13px;padding:6px 10px}
 .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:16px}
 #msg{font-size:13px;color:var(--muted)}
 #ta{display:none;width:100%;margin-top:10px;font-size:14px;cursor:text}
@@ -53,7 +62,7 @@ button:hover,select:hover{border-color:var(--muted)}
 <body>
 <div class="wrap">
   <h1>Escala da Mídia</h1>
-  <p class="sub">Todo domingo: 1 líder e 2 apoios. Novembro de 2026 a dezembro de 2027.</p>
+  <p class="sub">Todo domingo: 1 líder e 2 apoios. Primeiro domingo do mês: Santa Ceia, com equipe ampliada. Último domingo do mês: quem está em formação assume a liderança, acompanhado por um mentor. Novembro de 2026 a dezembro de 2027.</p>
 
   <div class="nav">
     <button id="prev" aria-label="Mês anterior">&#8249;</button>
@@ -67,14 +76,24 @@ button:hover,select:hover{border-color:var(--muted)}
 
   <div class="actions">
     <button id="copy">Copiar mês para WhatsApp</button>
+    <button id="wa">Falar no WhatsApp</button>
     <span id="msg"></span>
   </div>
   <textarea id="ta" rows="8" readonly></textarea>
 </div>
 
 <script>
+/* ===== CONFIGURAÇÕES (edite aqui) ===== */
+const WHATS='5591980108918'; /* WhatsApp que recebe os pedidos de troca: 55 + DDD + número, só dígitos */
+const CEIA_PADRAO=5;         /* pessoas na Santa Ceia, líder incluso: 4, 5 ou 6 */
+const CEIA_TAM={             /* exceções por data, no formato 'AAAA-MM-DD':pessoas */
+  /* '2027-01-03':6, */
+};
+/* ===== FIM DAS CONFIGURAÇÕES ===== */
+
 const P={Wellington:270,Enzo:175,'João':215,Andrei:25,Alefe:130,Lays:320};
 const LEAD=['Wellington','Enzo','João'];
+const TR=['Andrei','Alefe','Lays'];
 const CYC=[
   ['Wellington',['Andrei','Alefe']],
   ['Enzo',['Lays','João']],
@@ -87,8 +106,48 @@ const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agos
 
 const S=[];
 for(let i=0;i<58;i++){
-  S.push({d:new Date(Date.UTC(2026,10,22+i*7)),l:CYC[i%6][0],a:CYC[i%6][1]});
+  S.push({d:new Date(Date.UTC(2026,10,22+i*7)),l:CYC[i%6][0],a:CYC[i%6][1].slice()});
 }
+
+/* Último domingo de cada mês: líder em formação + mentor */
+const lastIdx={};
+S.forEach((s,i)=>{lastIdx[s.d.getUTCFullYear()*12+s.d.getUTCMonth()]=i;});
+Object.keys(lastIdx).map(Number).sort((a,b)=>a-b).forEach((key,k)=>{
+  const s=S[lastIdx[key]];
+  const T=TR[k%TR.length];
+  const mentor=s.l;
+  const outro=s.a.find(n=>n!==T);
+  s.l=T;
+  s.m=mentor;
+  s.a=[mentor,outro];
+  s.treino=true;
+});
+
+/* Primeiro domingo de cada mês: Santa Ceia */
+const ORDEM_FOLGA=['Lays','Wellington','Alefe','Enzo','Andrei','João'];
+const folgas={};ORDEM_FOLGA.forEach(n=>{folgas[n]=0;});
+let kc=0;
+S.forEach(s=>{
+  if(s.d.getUTCDate()>7)return;
+  const key=s.d.toISOString().slice(0,10);
+  const tam=Math.min(6,Math.max(3,CEIA_TAM[key]||CEIA_PADRAO));
+  const lider=LEAD[kc%LEAD.length];
+  const folga=[];
+  for(let j=0;j<6-tam;j++){
+    const cand=ORDEM_FOLGA.filter(n=>
+      n!==lider&&!folga.includes(n)&&
+      (!LEAD.includes(n)||LEAD.filter(x=>x!==n&&!folga.includes(x)).length>=2)
+    ).sort((a,b)=>folgas[a]-folgas[b]);
+    if(!cand.length)break;
+    folga.push(cand[0]);folgas[cand[0]]++;
+  }
+  s.l=lider;
+  s.a=Object.keys(P).filter(n=>n!==lider&&!folga.includes(n));
+  s.folga=folga;
+  s.ceia=true;
+  kc++;
+});
+
 const M=[];
 S.forEach(s=>{
   const y=s.d.getUTCFullYear(),m=s.d.getUTCMonth();
@@ -106,6 +165,8 @@ if(nextS){
 
 const p2=n=>String(n).padStart(2,'0');
 const $=id=>document.getElementById(id);
+const dkey=s=>s.d.toISOString().slice(0,10);
+const fdata=s=>`${p2(s.d.getUTCDate())}/${p2(s.d.getUTCMonth()+1)}/${s.d.getUTCFullYear()}`;
 const mesSel=$('mes');
 M.forEach((x,i)=>{
   const o=document.createElement('option');
@@ -121,11 +182,11 @@ const chips=$('chips');
 });
 
 function av(n){return `<span class="av" style="--h:${P[n]}">${n.slice(0,2).toUpperCase()}</span>`;}
-function rowHtml(n,isLead){
+function rowHtml(n,kind){
   let c='row';
   if(sel&&n===sel)c+=' me';else if(sel)c+=' dim';
-  const tag=isLead?'<span class="tag">Líder</span>':'';
-  return `<div class="${c}">${av(n)}<span>${n}</span>${tag}</div>`;
+  const tags={lead:'<span class="tag">Líder</span>',mentor:'<span class="tag mentor">Mentor</span>'};
+  return `<div class="${c}">${av(n)}<span>${n}</span>${tags[kind]||''}</div>`;
 }
 function monthList(){
   const x=M[mi];
@@ -147,13 +208,20 @@ function render(){
     if(sel&&hit)cls+=' hit';
     if(sel&&!hit)cls+=' off';
     const isNext=nextS&&s.d.getTime()===nextS.d.getTime();
-    const badge=isNext?'<span class="tag next">Próximo</span>':'';
+    let badges='';
+    if(s.ceia)badges+='<span class="tag ceia">Santa Ceia</span>';
+    if(s.treino)badges+='<span class="tag train">Formação</span>';
+    if(isNext)badges+='<span class="tag next">Próximo</span>';
+    const apoio=s.a.map(n=>rowHtml(n,s.treino&&n===s.m?'mentor':'')).join('');
+    const folga=(s.ceia&&s.folga.length)?`<p class="folga">Folga: ${s.folga.join(', ')}</p>`:'';
     return `<div class="${cls}">
       <div class="head">
         <span class="day">${p2(s.d.getUTCDate())}</span>
-        <span class="dow">dom · ${MESES[s.d.getUTCMonth()].slice(0,3).toLowerCase()}</span>${badge}
+        <span class="dow">dom · ${MESES[s.d.getUTCMonth()].slice(0,3).toLowerCase()}</span>
+        <span class="badges">${badges}</span>
       </div>
-      ${rowHtml(s.l,true)}${s.a.map(n=>rowHtml(n,false)).join('')}
+      ${rowHtml(s.l,'lead')}${apoio}${folga}
+      <button class="swap" data-d="${dkey(s)}">Pedir troca</button>
     </div>`;
   }).join('');
 
@@ -162,36 +230,7 @@ function render(){
     const mine=list.filter(s=>serves(s,sel)).length;
     const tot=S.filter(s=>serves(s,sel)).length;
     const lead=S.filter(s=>s.l===sel).length;
-    st=metric(sel+' no mês',mine)+metric('Total no período',tot)+metric('Como líder',LEAD.includes(sel)?lead:'—');
-  }else{
-    st+=metric('Domingos no período',S.length)+metric('Ciclo de rodízio','6 semanas');
-  }
-  $('stats').innerHTML=st;
-  $('msg').textContent='';
-  $('ta').style.display='none';
-}
-
-function texto(){
-  const x=M[mi];
-  let t=`*Escala da Mídia - ${MESES[x.m]}/${x.y}*\n`;
-  monthList().forEach(s=>{
-    t+=`\n${p2(s.d.getUTCDate())}/${p2(s.d.getUTCMonth()+1)} (dom)\nLíder: ${s.l}\nApoio: ${s.a.join(', ')}\n`;
-  });
-  return t;
-}
-
-$('prev').onclick=()=>{if(mi>0){mi--;render();}};
-$('next').onclick=()=>{if(mi<M.length-1){mi++;render();}};
-mesSel.onchange=()=>{mi=+mesSel.value;render();};
-$('copy').onclick=()=>{
-  const t=texto();
-  const fb=()=>{
-    const ta=$('ta');ta.value=t;ta.style.display='block';ta.focus();ta.select();
-    $('msg').textContent='Selecione e copie o texto abaixo.';
-  };
-  try{navigator.clipboard.writeText(t).then(()=>{$('msg').textContent='Copiado';},fb);}
-  catch(e){fb();}
-};
+    st=metric(sel+' no mês',mine)+metric('Total no período',tot)+metric(LEAD.includes(sel)?'Como
 render();
 </script>
 </body>
