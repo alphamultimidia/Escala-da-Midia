@@ -4,6 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Escala da Mídia</title>
+<script>
+/* Mostra qualquer erro do script em uma faixa vermelha no topo da página */
+window.addEventListener('error',function(e){
+  var d=document.createElement('div');
+  d.style.cssText='background:#fcebeb;color:#791f1f;padding:12px;margin:12px;border-radius:8px;font:14px system-ui,sans-serif';
+  d.textContent='Erro na página: '+e.message+(e.lineno?' (linha '+e.lineno+')':'');
+  function put(){document.body.insertBefore(d,document.body.firstChild);}
+  if(document.body)put();else document.addEventListener('DOMContentLoaded',put);
+});
+</script>
 <style>
 :root{
   --bg:#f6f5f2;--card:#ffffff;--card2:#efeee9;--text:#1f1f1d;--muted:#6b6a65;
@@ -83,18 +93,20 @@ button:hover,select:hover{border-color:var(--muted)}
 </div>
 
 <script>
+(function(){
+
 /* ===== CONFIGURAÇÕES (edite aqui) ===== */
-const WHATS='5591980108918'; /* WhatsApp que recebe os pedidos de troca: 55 + DDD + número, só dígitos */
-const CEIA_PADRAO=5;         /* pessoas na Santa Ceia, líder incluso: 4, 5 ou 6 */
-const CEIA_TAM={             /* exceções por data, no formato 'AAAA-MM-DD':pessoas */
-  /* '2027-01-03':6, */
+var WHATS='5591980108918';   /* WhatsApp que recebe os pedidos de troca: 55 + DDD + número, só dígitos */
+var CEIA_PADRAO=5;           /* pessoas na Santa Ceia, líder incluso: 4, 5 ou 6 */
+var CEIA_TAM={               /* exceções por data, no formato 'AAAA-MM-DD':pessoas. Exemplo: '2027-01-03':6 */
 };
 /* ===== FIM DAS CONFIGURAÇÕES ===== */
 
-const P={Wellington:270,Enzo:175,'João':215,Andrei:25,Alefe:130,Lays:320};
-const LEAD=['Wellington','Enzo','João'];
-const TR=['Andrei','Alefe','Lays'];
-const CYC=[
+var P={'Wellington':270,'Enzo':175,'João':215,'Andrei':25,'Alefe':130,'Lays':320};
+var NOMES=['Wellington','Enzo','João','Andrei','Alefe','Lays'];
+var LEAD=['Wellington','Enzo','João'];
+var TR=['Andrei','Alefe','Lays'];
+var CYC=[
   ['Wellington',['Andrei','Alefe']],
   ['Enzo',['Lays','João']],
   ['João',['Andrei','Lays']],
@@ -102,136 +114,244 @@ const CYC=[
   ['Enzo',['Lays','Wellington']],
   ['João',['Andrei','Alefe']]
 ];
-const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+var MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
-const S=[];
-for(let i=0;i<58;i++){
-  S.push({d:new Date(Date.UTC(2026,10,22+i*7)),l:CYC[i%6][0],a:CYC[i%6][1].slice()});
+function p2(n){return String(n).padStart(2,'0');}
+function el(id){return document.getElementById(id);}
+function dkey(s){return s.d.toISOString().slice(0,10);}
+function fdata(s){return p2(s.d.getUTCDate())+'/'+p2(s.d.getUTCMonth()+1)+'/'+s.d.getUTCFullYear();}
+
+/* ----- 1) Rodízio base: todos os domingos ----- */
+var S=[];
+for(var i=0;i<58;i++){
+  S.push({
+    d:new Date(Date.UTC(2026,10,22+i*7)),
+    l:CYC[i%6][0],
+    a:CYC[i%6][1].slice(),
+    treino:false,ceia:false,folga:[],m:''
+  });
 }
 
-/* Último domingo de cada mês: líder em formação + mentor */
-const lastIdx={};
-S.forEach((s,i)=>{lastIdx[s.d.getUTCFullYear()*12+s.d.getUTCMonth()]=i;});
-Object.keys(lastIdx).map(Number).sort((a,b)=>a-b).forEach((key,k)=>{
-  const s=S[lastIdx[key]];
-  const T=TR[k%TR.length];
-  const mentor=s.l;
-  const outro=s.a.find(n=>n!==T);
-  s.l=T;
+/* ----- 2) Último domingo do mês: líder em formação + mentor ----- */
+var lastIdx={};
+S.forEach(function(s,idx){
+  lastIdx[s.d.getUTCFullYear()*12+s.d.getUTCMonth()]=idx;
+});
+Object.keys(lastIdx).map(Number).sort(function(a,b){return a-b;}).forEach(function(key,k){
+  var s=S[lastIdx[key]];
+  var novato=TR[k%TR.length];
+  var mentor=s.l;
+  var outro=s.a.filter(function(n){return n!==novato;})[0];
+  s.l=novato;
   s.m=mentor;
   s.a=[mentor,outro];
   s.treino=true;
 });
 
-/* Primeiro domingo de cada mês: Santa Ceia */
-const ORDEM_FOLGA=['Lays','Wellington','Alefe','Enzo','Andrei','João'];
-const folgas={};ORDEM_FOLGA.forEach(n=>{folgas[n]=0;});
-let kc=0;
-S.forEach(s=>{
+/* ----- 3) Primeiro domingo do mês: Santa Ceia ----- */
+var ORDEM_FOLGA=['Lays','Wellington','Alefe','Enzo','Andrei','João'];
+var folgas={};
+ORDEM_FOLGA.forEach(function(n){folgas[n]=0;});
+var kc=0;
+S.forEach(function(s){
   if(s.d.getUTCDate()>7)return;
-  const key=s.d.toISOString().slice(0,10);
-  const tam=Math.min(6,Math.max(3,CEIA_TAM[key]||CEIA_PADRAO));
-  const lider=LEAD[kc%LEAD.length];
-  const folga=[];
-  for(let j=0;j<6-tam;j++){
-    const cand=ORDEM_FOLGA.filter(n=>
-      n!==lider&&!folga.includes(n)&&
-      (!LEAD.includes(n)||LEAD.filter(x=>x!==n&&!folga.includes(x)).length>=2)
-    ).sort((a,b)=>folgas[a]-folgas[b]);
+  var tam=CEIA_TAM[dkey(s)]||CEIA_PADRAO;
+  tam=Math.min(6,Math.max(3,tam));
+  var lider=LEAD[kc%LEAD.length];
+  var folga=[];
+  for(var j=0;j<6-tam;j++){
+    var cand=ORDEM_FOLGA.filter(function(n){
+      if(n===lider||folga.indexOf(n)>=0)return false;
+      if(LEAD.indexOf(n)>=0){
+        var restam=LEAD.filter(function(x){return x!==n&&folga.indexOf(x)<0;}).length;
+        if(restam<2)return false;
+      }
+      return true;
+    }).sort(function(a,b){return folgas[a]-folgas[b];});
     if(!cand.length)break;
-    folga.push(cand[0]);folgas[cand[0]]++;
+    folga.push(cand[0]);
+    folgas[cand[0]]++;
   }
   s.l=lider;
-  s.a=Object.keys(P).filter(n=>n!==lider&&!folga.includes(n));
+  s.a=NOMES.filter(function(n){return n!==lider&&folga.indexOf(n)<0;});
   s.folga=folga;
   s.ceia=true;
   kc++;
 });
 
-const M=[];
-S.forEach(s=>{
-  const y=s.d.getUTCFullYear(),m=s.d.getUTCMonth();
-  if(!M.some(x=>x.y===y&&x.m===m))M.push({y,m});
+/* ----- 4) Meses disponíveis e estado ----- */
+var M=[];
+S.forEach(function(s){
+  var y=s.d.getUTCFullYear(),m=s.d.getUTCMonth();
+  if(!M.some(function(x){return x.y===y&&x.m===m;}))M.push({y:y,m:m});
 });
 
-const now=new Date();
-const todayU=Date.UTC(now.getFullYear(),now.getMonth(),now.getDate());
-const nextS=S.find(s=>s.d.getTime()>=todayU);
-let mi=0,sel='';
+var now=new Date();
+var todayU=Date.UTC(now.getFullYear(),now.getMonth(),now.getDate());
+var nextS=S.filter(function(s){return s.d.getTime()>=todayU;})[0]||null;
+var mi=0,sel='';
 if(nextS){
-  mi=M.findIndex(x=>x.y===nextS.d.getUTCFullYear()&&x.m===nextS.d.getUTCMonth());
-  if(mi<0)mi=0;
+  var f=-1;
+  M.forEach(function(x,idx){
+    if(x.y===nextS.d.getUTCFullYear()&&x.m===nextS.d.getUTCMonth())f=idx;
+  });
+  if(f>=0)mi=f;
 }
 
-const p2=n=>String(n).padStart(2,'0');
-const $=id=>document.getElementById(id);
-const dkey=s=>s.d.toISOString().slice(0,10);
-const fdata=s=>`${p2(s.d.getUTCDate())}/${p2(s.d.getUTCMonth()+1)}/${s.d.getUTCFullYear()}`;
-const mesSel=$('mes');
-M.forEach((x,i)=>{
-  const o=document.createElement('option');
-  o.value=i;o.textContent=MESES[x.m]+' de '+x.y;
+var mesSel=el('mes');
+M.forEach(function(x,idx){
+  var o=document.createElement('option');
+  o.value=idx;
+  o.textContent=MESES[x.m]+' de '+x.y;
   mesSel.appendChild(o);
 });
-const chips=$('chips');
-['',...Object.keys(P)].forEach(n=>{
-  const b=document.createElement('button');
-  b.className='chip';b.textContent=n||'Todos';b.dataset.n=n;
-  b.onclick=()=>{sel=n;render();};
+
+var chips=el('chips');
+['Todos'].concat(NOMES).forEach(function(n){
+  var b=document.createElement('button');
+  b.className='chip';
+  b.textContent=n;
+  b.setAttribute('data-n',n==='Todos'?'':n);
+  b.onclick=function(){sel=n==='Todos'?'':n;render();};
   chips.appendChild(b);
 });
 
-function av(n){return `<span class="av" style="--h:${P[n]}">${n.slice(0,2).toUpperCase()}</span>`;}
+/* ----- 5) Desenho da tela ----- */
+function av(n){
+  return '<span class="av" style="--h:'+P[n]+'">'+n.slice(0,2).toUpperCase()+'</span>';
+}
 function rowHtml(n,kind){
-  let c='row';
+  var c='row';
   if(sel&&n===sel)c+=' me';else if(sel)c+=' dim';
-  const tags={lead:'<span class="tag">Líder</span>',mentor:'<span class="tag mentor">Mentor</span>'};
-  return `<div class="${c}">${av(n)}<span>${n}</span>${tags[kind]||''}</div>`;
+  var tag='';
+  if(kind==='lead')tag='<span class="tag">Líder</span>';
+  if(kind==='mentor')tag='<span class="tag mentor">Mentor</span>';
+  return '<div class="'+c+'">'+av(n)+'<span>'+n+'</span>'+tag+'</div>';
 }
 function monthList(){
-  const x=M[mi];
-  return S.filter(s=>s.d.getUTCFullYear()===x.y&&s.d.getUTCMonth()===x.m);
+  var x=M[mi];
+  return S.filter(function(s){return s.d.getUTCFullYear()===x.y&&s.d.getUTCMonth()===x.m;});
 }
-function serves(s,n){return s.l===n||s.a.includes(n);}
-function metric(l,v){return `<div class="stat"><p class="l">${l}</p><p class="v">${v}</p></div>`;}
+function serves(s,n){return s.l===n||s.a.indexOf(n)>=0;}
+function metric(l,v){
+  return '<div class="stat"><p class="l">'+l+'</p><p class="v">'+v+'</p></div>';
+}
 
 function render(){
-  const list=monthList();
-  mesSel.value=mi;
-  $('prev').style.visibility=mi===0?'hidden':'visible';
-  $('next').style.visibility=mi===M.length-1?'hidden':'visible';
-  chips.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.n===sel));
+  var list=monthList();
+  mesSel.value=String(mi);
+  el('prev').style.visibility=mi===0?'hidden':'visible';
+  el('next').style.visibility=mi===M.length-1?'hidden':'visible';
+  Array.prototype.forEach.call(chips.querySelectorAll('.chip'),function(c){
+    c.classList.toggle('on',c.getAttribute('data-n')===sel);
+  });
 
-  $('cards').innerHTML=list.map(s=>{
-    const hit=!sel||serves(s,sel);
-    let cls='card';
+  el('cards').innerHTML=list.map(function(s){
+    var hit=!sel||serves(s,sel);
+    var cls='card';
     if(sel&&hit)cls+=' hit';
     if(sel&&!hit)cls+=' off';
-    const isNext=nextS&&s.d.getTime()===nextS.d.getTime();
-    let badges='';
+    var isNext=nextS&&s.d.getTime()===nextS.d.getTime();
+    var badges='';
     if(s.ceia)badges+='<span class="tag ceia">Santa Ceia</span>';
     if(s.treino)badges+='<span class="tag train">Formação</span>';
     if(isNext)badges+='<span class="tag next">Próximo</span>';
-    const apoio=s.a.map(n=>rowHtml(n,s.treino&&n===s.m?'mentor':'')).join('');
-    const folga=(s.ceia&&s.folga.length)?`<p class="folga">Folga: ${s.folga.join(', ')}</p>`:'';
-    return `<div class="${cls}">
-      <div class="head">
-        <span class="day">${p2(s.d.getUTCDate())}</span>
-        <span class="dow">dom · ${MESES[s.d.getUTCMonth()].slice(0,3).toLowerCase()}</span>
-        <span class="badges">${badges}</span>
-      </div>
-      ${rowHtml(s.l,'lead')}${apoio}${folga}
-      <button class="swap" data-d="${dkey(s)}">Pedir troca</button>
-    </div>`;
+    var apoio=s.a.map(function(n){
+      return rowHtml(n,(s.treino&&n===s.m)?'mentor':'');
+    }).join('');
+    var folga='';
+    if(s.ceia&&s.folga.length)folga='<p class="folga">Folga: '+s.folga.join(', ')+'</p>';
+    return '<div class="'+cls+'">'
+      +'<div class="head">'
+      +'<span class="day">'+p2(s.d.getUTCDate())+'</span>'
+      +'<span class="dow">dom · '+MESES[s.d.getUTCMonth()].slice(0,3).toLowerCase()+'</span>'
+      +'<span class="badges">'+badges+'</span>'
+      +'</div>'
+      +rowHtml(s.l,'lead')+apoio+folga
+      +'<button class="swap" data-d="'+dkey(s)+'">Pedir troca</button>'
+      +'</div>';
   }).join('');
 
-  let st=metric('Domingos no mês',list.length);
+  var st=metric('Domingos no mês',list.length);
   if(sel){
-    const mine=list.filter(s=>serves(s,sel)).length;
-    const tot=S.filter(s=>serves(s,sel)).length;
-    const lead=S.filter(s=>s.l===sel).length;
-    st=metric(sel+' no mês',mine)+metric('Total no período',tot)+metric(LEAD.includes(sel)?'Como
+    var mine=list.filter(function(s){return serves(s,sel);}).length;
+    var tot=S.filter(function(s){return serves(s,sel);}).length;
+    var lead=S.filter(function(s){return s.l===sel;}).length;
+    st=metric(sel+' no mês',mine)
+      +metric('Total no período',tot)
+      +metric(LEAD.indexOf(sel)>=0?'Como líder':'Como líder (formação)',lead);
+  }else{
+    st+=metric('Santa Ceias no período',S.filter(function(s){return s.ceia;}).length)
+      +metric('Domingos de formação',S.filter(function(s){return s.treino;}).length);
+  }
+  el('stats').innerHTML=st;
+  el('msg').textContent='';
+  el('ta').style.display='none';
+}
+
+/* ----- 6) Texto para WhatsApp e pedido de troca ----- */
+function texto(){
+  var x=M[mi];
+  var t='*Escala da Mídia - '+MESES[x.m]+'/'+x.y+'*\n';
+  monthList().forEach(function(s){
+    t+='\n'+p2(s.d.getUTCDate())+'/'+p2(s.d.getUTCMonth()+1)+' (dom)\n';
+    if(s.ceia){
+      t+='*Santa Ceia*\nLíder: '+s.l+'\nEquipe: '+s.a.join(', ')+'\n';
+      if(s.folga.length)t+='Folga: '+s.folga.join(', ')+'\n';
+    }else if(s.treino){
+      var outro=s.a.filter(function(n){return n!==s.m;})[0];
+      t+='Líder em formação: '+s.l+'\nMentor: '+s.m+'\nApoio: '+outro+'\n';
+    }else{
+      t+='Líder: '+s.l+'\nApoio: '+s.a.join(', ')+'\n';
+    }
+  });
+  return t;
+}
+
+function abrirWa(msg){
+  if(!/^[0-9]{10,15}$/.test(WHATS)){
+    el('msg').textContent='Falta configurar o número do WhatsApp no código (linha WHATS).';
+    return;
+  }
+  window.open('https://wa.me/'+WHATS+'?text='+encodeURIComponent(msg),'_blank');
+}
+
+el('cards').onclick=function(e){
+  var b=e.target.closest('.swap');
+  if(!b)return;
+  var d=b.getAttribute('data-d');
+  var s=S.filter(function(x){return dkey(x)===d;})[0];
+  if(!s)return;
+  var tipo=s.ceia?' (Santa Ceia)':(s.treino?' (domingo de formação)':'');
+  abrirWa('Olá! Preciso de uma troca na escala da mídia.\n'
+    +'Data: '+fdata(s)+', domingo'+tipo+'\n'
+    +'Líder: '+s.l+'\n'
+    +'Equipe: '+s.a.join(', ')+'\n'
+    +'Meu nome: '+sel+'\n'
+    +'Motivo: ');
+};
+el('wa').onclick=function(){abrirWa('Olá! Preciso falar sobre a escala da mídia.');};
+el('prev').onclick=function(){if(mi>0){mi--;render();}};
+el('next').onclick=function(){if(mi<M.length-1){mi++;render();}};
+mesSel.onchange=function(){mi=Number(mesSel.value);render();};
+el('copy').onclick=function(){
+  var t=texto();
+  function fb(){
+    var ta=el('ta');
+    ta.value=t;
+    ta.style.display='block';
+    ta.focus();
+    ta.select();
+    el('msg').textContent='Selecione e copie o texto abaixo.';
+  }
+  try{
+    navigator.clipboard.writeText(t).then(function(){el('msg').textContent='Copiado';},fb);
+  }catch(err){fb();}
+};
+
 render();
+
+})();
 </script>
 </body>
 </html>
