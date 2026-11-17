@@ -62,6 +62,12 @@ button:hover,select:hover{border-color:var(--verde)}
 .row.me .tag{background:#000;color:var(--verde)}
 .row.me .tag.mentor{background:#000;color:#fff;border-color:#000}
 .folga{font-size:13px;color:var(--muted);margin:6px 0 0 6px}
+.swap{margin-top:12px;width:100%;font-size:13px;padding:6px 10px;color:var(--verde);border-color:rgba(98,255,28,.5);background:transparent}
+.swap:hover{background:var(--verde-bg);border-color:var(--verde)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:18px}
+#wa{color:var(--verde);border-color:var(--verde);background:transparent}
+#wa:hover{background:var(--verde-bg)}
+#msg{font-size:13px;color:var(--muted)}
 .versao{font-size:12px;color:var(--muted);margin-top:24px}
 </style>
 </head>
@@ -83,13 +89,19 @@ button:hover,select:hover{border-color:var(--verde)}
   <div id="stats" class="stats"></div>
   <div id="cards" class="cards"></div>
 
-  <p class="versao">Versão de 17/11/2026 (tema preto e verde)</p>
+  <div class="actions">
+    <button id="wa">Falar no WhatsApp</button>
+    <span id="msg"></span>
+  </div>
+
+  <p class="versao">Versão de 17/11/2026 (com WhatsApp)</p>
 </div>
 
 <script>
 (function(){
 
 /* ===== CONFIGURAÇÕES (edite aqui) ===== */
+var WHATS='5591980108918';   /* WhatsApp que recebe os pedidos de troca: 55 + DDD + número, só dígitos */
 var CEIA_PADRAO=5;           /* pessoas na Santa Ceia, líder incluso: 4, 5 ou 6 */
 var CEIA_TAM={               /* exceções por data, no formato 'AAAA-MM-DD':pessoas. Exemplo: '2027-01-03':6 */
 };
@@ -119,6 +131,7 @@ var EXTS_LOGO=['png','jpg','jpeg','svg','webp','PNG','JPG','JPEG','SVG'];
 function p2(n){return String(n).padStart(2,'0');}
 function el(id){return document.getElementById(id);}
 function dkey(s){return s.d.toISOString().slice(0,10);}
+function fdata(s){return p2(s.d.getUTCDate())+'/'+p2(s.d.getUTCMonth()+1)+'/'+s.d.getUTCFullYear();}
 function semAcento(s){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
 
 /* ----- 1) Rodízio base: todos os domingos ----- */
@@ -270,6 +283,7 @@ function render(){
       +'<span class="badges">'+badges+'</span>'
       +'</div>'
       +rowHtml(s.l,'lead')+apoio+folga
+      +'<button class="swap" data-d="'+dkey(s)+'">Pedir troca</button>'
       +'</div>';
   }).join('');
 
@@ -286,13 +300,39 @@ function render(){
       +metric('Domingos de formação',S.filter(function(s){return s.treino;}).length);
   }
   el('stats').innerHTML=st;
+  el('msg').textContent='';
 }
+
+/* ----- 6) WhatsApp: pedido de troca ----- */
+function abrirWa(msg){
+  if(!/^[0-9]{10,15}$/.test(WHATS)){
+    el('msg').textContent='Falta configurar o número do WhatsApp no código (linha WHATS).';
+    return;
+  }
+  window.open('https://wa.me/'+WHATS+'?text='+encodeURIComponent(msg),'_blank');
+}
+
+el('cards').onclick=function(e){
+  var b=e.target.closest('.swap');
+  if(!b)return;
+  var d=b.getAttribute('data-d');
+  var s=S.filter(function(x){return dkey(x)===d;})[0];
+  if(!s)return;
+  var tipo=s.ceia?' (Santa Ceia)':(s.treino?' (domingo de formação)':'');
+  abrirWa('Olá! Preciso de uma troca na escala da mídia.\n'
+    +'Data: '+fdata(s)+', domingo'+tipo+'\n'
+    +'Líder: '+s.l+'\n'
+    +'Equipe: '+s.a.join(', ')+'\n'
+    +'Meu nome: '+sel+'\n'
+    +'Motivo: ');
+};
+el('wa').onclick=function(){abrirWa('Olá! Preciso falar sobre a escala da mídia.');};
 
 el('prev').onclick=function(){if(mi>0){mi--;render();}};
 el('next').onclick=function(){if(mi<M.length-1){mi++;render();}};
 mesSel.onchange=function(){mi=Number(mesSel.value);render();};
 
-/* ----- 6) Carrega fotos e logo (tenta vários nomes/extensões) ----- */
+/* ----- 7) Carrega fotos e logo (tenta vários nomes/extensões) ----- */
 function achar(lista,ok,falha){
   var k=0;
   function tentar(){
