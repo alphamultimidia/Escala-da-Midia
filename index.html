@@ -41,7 +41,7 @@ button:hover,select:hover{border-color:var(--verde)}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
 .stat{background:var(--card2);border-radius:8px;padding:14px}
 .stat p{margin:0}.stat .l{font-size:13px;color:var(--muted)}.stat .v{font-size:24px;font-weight:500;color:var(--verde)}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
 .card.hit{border:2px solid var(--verde)}
 .card.off{background:var(--card2)}
@@ -53,14 +53,16 @@ button:hover,select:hover{border-color:var(--verde)}
 .row.dim{color:var(--muted)}
 .av{width:34px;height:34px;border-radius:50%;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex:none;background:hsl(var(--h) 45% 22%);color:hsl(var(--h) 75% 85%)}
 .av img{width:100%;height:100%;object-fit:cover;display:block}
-.tag{margin-left:auto;font-size:11px;padding:2px 8px;border-radius:8px;background:var(--verde);color:#000;font-weight:500}
-.badges .tag{margin-left:0}
+.tags{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.tag{font-size:11px;padding:2px 8px;border-radius:8px;background:var(--verde);color:#000;font-weight:500}
 .tag.next{background:var(--verde-bg);color:var(--verde);font-weight:400}
 .tag.train{background:transparent;color:var(--verde);border:1px solid var(--verde);font-weight:400}
 .tag.ceia{background:#ffffff;color:#000}
 .tag.mentor{background:#222;color:#bdbdbd;border:1px solid var(--border);font-weight:400}
+.tag.foto{background:transparent;color:#fff;border:1px solid #fff;font-weight:400}
 .row.me .tag{background:#000;color:var(--verde)}
 .row.me .tag.mentor{background:#000;color:#fff;border-color:#000}
+.row.me .tag.foto{background:#000;color:#fff;border-color:#000}
 .folga{font-size:13px;color:var(--muted);margin:6px 0 0 6px}
 .swap{margin-top:12px;width:100%;font-size:13px;padding:6px 10px;color:var(--verde);border-color:rgba(98,255,28,.5);background:transparent}
 .swap:hover{background:var(--verde-bg);border-color:var(--verde)}
@@ -77,7 +79,7 @@ button:hover,select:hover{border-color:var(--verde)}
     <img id="logo" class="logo" alt="Logo" hidden>
     <h1>Escala da Mídia</h1>
   </div>
-  <p class="sub">Todo domingo: 1 líder e 2 apoios. Primeiro domingo do mês: Santa Ceia, com equipe ampliada. Último domingo do mês: quem está em formação assume a liderança, acompanhado por um mentor. Novembro de 2026 a dezembro de 2027.</p>
+  <p class="sub">Todo domingo: 1 líder e 2 apoios. Primeiro domingo do mês: Santa Ceia, com 4 pessoas trabalhando e 2 de folga; cada novo líder conduz 1 Santa Ceia por ano. Último domingo do mês: quem está em formação assume a liderança, acompanhado por um mentor. Fotografia: Alefe, Lays e Andrei (quando não estão como líderes). Novembro de 2026 a dezembro de 2027.</p>
 
   <div class="nav">
     <button id="prev" aria-label="Mês anterior">&#8249;</button>
@@ -94,7 +96,7 @@ button:hover,select:hover{border-color:var(--verde)}
     <span id="msg"></span>
   </div>
 
-  <p class="versao">Versão de 17/11/2026 (com WhatsApp)</p>
+  <p class="versao">Versão de 23/11/2026 (Santa Ceia com 4, novos líderes na ceia e fotografia)</p>
 </div>
 
 <script>
@@ -102,9 +104,12 @@ button:hover,select:hover{border-color:var(--verde)}
 
 /* ===== CONFIGURAÇÕES (edite aqui) ===== */
 var WHATS='5591980108918';   /* WhatsApp que recebe os pedidos de troca: 55 + DDD + número, só dígitos */
-var CEIA_PADRAO=5;           /* pessoas na Santa Ceia, líder incluso: 4, 5 ou 6 */
-var CEIA_TAM={               /* exceções por data, no formato 'AAAA-MM-DD':pessoas. Exemplo: '2027-01-03':6 */
+var CEIA_PADRAO=4;           /* pessoas trabalhando na Santa Ceia, líder incluso (agora 4) */
+var CEIA_TAM={               /* exceções por data, no formato 'AAAA-MM-DD':pessoas. Exemplo: '2027-01-03':5 */
 };
+var SEMENTE=2026;            /* número do sorteio das folgas extras. Mude este número para sortear de novo */
+var FOTOGRAFOS=['Alefe','Lays','Andrei'];            /* quem faz fotografia nos cultos */
+var SEM_FOTO_LIDER=['Lays','Andrei','Alefe'];        /* quem NÃO faz fotografia quando está como líder */
 /* ===== FIM DAS CONFIGURAÇÕES ===== */
 
 var P={'Wellington':270,'Enzo':175,'João':215,'Andrei':25,'Alefe':130,'Lays':320};
@@ -134,6 +139,15 @@ function dkey(s){return s.d.toISOString().slice(0,10);}
 function fdata(s){return p2(s.d.getUTCDate())+'/'+p2(s.d.getUTCMonth()+1)+'/'+s.d.getUTCFullYear();}
 function semAcento(s){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
 
+/* Sorteio com semente: o resultado é sempre o mesmo para todo mundo */
+var _a=SEMENTE;
+function rnd(){
+  _a|=0;_a=_a+0x6D2B79F5|0;
+  var t=Math.imul(_a^_a>>>15,1|_a);
+  t=t+Math.imul(t^t>>>7,61|t)^t;
+  return((t^t>>>14)>>>0)/4294967296;
+}
+
 /* ----- 1) Rodízio base: todos os domingos ----- */
 var S=[];
 for(var i=0;i<58;i++){
@@ -162,17 +176,20 @@ Object.keys(lastIdx).map(Number).sort(function(a,b){return a-b;}).forEach(functi
 });
 
 /* ----- 3) Primeiro domingo do mês: Santa Ceia ----- */
+/* 3a) Escala base (a mesma de antes, com 1 de folga): líder e folga que já existiam */
 var ORDEM_FOLGA=['Lays','Wellington','Alefe','Enzo','Andrei','João'];
 var folgas={};
 ORDEM_FOLGA.forEach(function(n){folgas[n]=0;});
 var kc=0;
+var CE=[];
 S.forEach(function(s){
   if(s.d.getUTCDate()>7)return;
   var tam=CEIA_TAM[dkey(s)]||CEIA_PADRAO;
   tam=Math.min(6,Math.max(3,tam));
+  var tamBase=tam>=6?6:5;
   var lider=LEAD[kc%LEAD.length];
   var folga=[];
-  for(var j=0;j<6-tam;j++){
+  for(var j=0;j<6-tamBase;j++){
     var cand=ORDEM_FOLGA.filter(function(n){
       if(n===lider||folga.indexOf(n)>=0)return false;
       if(LEAD.indexOf(n)>=0){
@@ -185,11 +202,60 @@ S.forEach(function(s){
     folga.push(cand[0]);
     folgas[cand[0]]++;
   }
-  s.l=lider;
-  s.a=NOMES.filter(function(n){return n!==lider&&folga.indexOf(n)<0;});
-  s.folga=folga;
-  s.ceia=true;
+  CE.push({s:s,lider:lider,folga:folga,tam:tam,tamBase:tamBase,novato:''});
   kc++;
+});
+
+/* 3b) Novos líderes: cada um lidera 1 Santa Ceia por ano (espalhadas no ano, nunca numa ceia em que está de folga) */
+var anos={};
+CE.forEach(function(c,i){
+  var y=c.s.d.getUTCFullYear();
+  (anos[y]=anos[y]||[]).push(i);
+});
+Object.keys(anos).forEach(function(y){
+  var ids=anos[y],n=ids.length;
+  if(n<TR.length)return;   /* ano com poucas ceias (ex.: 2026) não entra */
+  TR.forEach(function(nome,k){
+    var alvo=Math.floor(n*(k+0.5)/TR.length);
+    for(var d=0;d<n;d++){
+      var achou=false;
+      [alvo+d,alvo-d].forEach(function(p){
+        if(achou||p<0||p>=n)return;
+        var c=CE[ids[p]];
+        if(c.novato||c.folga.indexOf(nome)>=0)return;
+        c.novato=nome;
+        achou=true;
+      });
+      if(achou)break;
+    }
+  });
+});
+
+/* 3c) Sorteio da folga extra (quem já estava de folga continua; só os líderes ficam protegidos) */
+var extraF={};
+NOMES.forEach(function(n){extraF[n]=0;});
+CE.forEach(function(c){
+  var s=c.s;
+  var lider=c.novato||c.lider;
+  var mentor=c.novato?c.lider:'';
+  var extras=c.tamBase-c.tam;
+  for(var j=0;j<extras;j++){
+    var cand=NOMES.filter(function(n){
+      return n!==lider&&n!==mentor&&c.folga.indexOf(n)<0;
+    });
+    if(!cand.length)break;
+    var min=Math.min.apply(null,cand.map(function(n){return extraF[n];}));
+    var pool=cand.filter(function(n){return extraF[n]===min;});
+    var esc=pool[Math.floor(rnd()*pool.length)];
+    c.folga.push(esc);
+    extraF[esc]++;
+  }
+  s.l=lider;
+  s.m=mentor;
+  s.treino=!!c.novato;
+  s.folga=c.folga;
+  s.a=NOMES.filter(function(n){return n!==lider&&c.folga.indexOf(n)<0;});
+  s.ceia=true;
 });
 
 /* ----- 4) Meses disponíveis e estado ----- */
@@ -235,13 +301,20 @@ function av(n){
   if(u)return '<span class="av"><img src="'+u+'" alt="'+n+'"></span>';
   return '<span class="av" style="--h:'+P[n]+'">'+n.slice(0,2).toUpperCase()+'</span>';
 }
-function rowHtml(n,kind){
+/* Fotografia: quem é fotógrafo e não está como líder (quando a regra proíbe) */
+function fotografa(s,n){
+  if(FOTOGRAFOS.indexOf(n)<0)return false;
+  if(s.l===n&&SEM_FOTO_LIDER.indexOf(n)>=0)return false;
+  return true;
+}
+function rowHtml(n,kind,s){
   var c='row';
   if(sel&&n===sel)c+=' me';else if(sel)c+=' dim';
   var tag='';
-  if(kind==='lead')tag='<span class="tag">Líder</span>';
-  if(kind==='mentor')tag='<span class="tag mentor">Mentor</span>';
-  return '<div class="'+c+'">'+av(n)+'<span>'+n+'</span>'+tag+'</div>';
+  if(kind==='lead')tag+='<span class="tag">Líder</span>';
+  if(kind==='mentor')tag+='<span class="tag mentor">Mentor</span>';
+  if(fotografa(s,n))tag+='<span class="tag foto">Fotografia</span>';
+  return '<div class="'+c+'">'+av(n)+'<span>'+n+'</span><span class="tags">'+tag+'</span></div>';
 }
 function monthList(){
   var x=M[mi];
@@ -272,7 +345,7 @@ function render(){
     if(s.treino)badges+='<span class="tag train">Formação</span>';
     if(isNext)badges+='<span class="tag next">Próximo</span>';
     var apoio=s.a.map(function(n){
-      return rowHtml(n,(s.treino&&n===s.m)?'mentor':'');
+      return rowHtml(n,(s.treino&&n===s.m)?'mentor':'',s);
     }).join('');
     var folga='';
     if(s.ceia&&s.folga.length)folga='<p class="folga">Folga: '+s.folga.join(', ')+'</p>';
@@ -282,7 +355,7 @@ function render(){
       +'<span class="dow">dom · '+MESES[s.d.getUTCMonth()].slice(0,3).toLowerCase()+'</span>'
       +'<span class="badges">'+badges+'</span>'
       +'</div>'
-      +rowHtml(s.l,'lead')+apoio+folga
+      +rowHtml(s.l,'lead',s)+apoio+folga
       +'<button class="swap" data-d="'+dkey(s)+'">Pedir troca</button>'
       +'</div>';
   }).join('');
@@ -295,6 +368,9 @@ function render(){
     st=metric(sel+' no mês',mine)
       +metric('Total no período',tot)
       +metric(LEAD.indexOf(sel)>=0?'Como líder':'Como líder (formação)',lead);
+    if(FOTOGRAFOS.indexOf(sel)>=0){
+      st+=metric('Fotografia no mês',list.filter(function(s){return serves(s,sel)&&fotografa(s,sel);}).length);
+    }
   }else{
     st+=metric('Santa Ceias no período',S.filter(function(s){return s.ceia;}).length)
       +metric('Domingos de formação',S.filter(function(s){return s.treino;}).length);
