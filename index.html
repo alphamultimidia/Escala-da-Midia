@@ -79,7 +79,7 @@ button:hover,select:hover{border-color:var(--verde)}
     <img id="logo" class="logo" alt="Logo" hidden>
     <h1>Escala da Mídia</h1>
   </div>
-  <p class="sub">Todo domingo: 1 líder e 2 apoios. Primeiro domingo do mês: Santa Ceia, com 4 pessoas trabalhando e 2 de folga; cada novo líder conduz 1 Santa Ceia por ano. Último domingo do mês: quem está em formação assume a liderança, acompanhado por um mentor. Fotografia: 1 pessoa por domingo, em rodízio entre Alefe, Lays e Andrei (quem é líder no dia não fotografa). Novembro de 2026 a dezembro de 2027.</p>
+  <p class="sub">Todo domingo: 1 líder e 2 apoios. Primeiro domingo do mês: Santa Ceia, com 4 pessoas trabalhando e 2 de folga; a liderança da ceia é dividida de forma justa entre todos (2 por ano cada), e quando um líder em formação conduz, o líder do dia vira mentor. Último domingo do mês: quem está em formação assume a liderança, acompanhado por um mentor. Fotografia: 1 pessoa por domingo, em rodízio entre Alefe, Lays e Andrei (quem é líder no dia não fotografa). Novembro de 2026 a dezembro de 2027.</p>
 
   <div class="nav">
     <button id="prev" aria-label="Mês anterior">&#8249;</button>
@@ -96,7 +96,7 @@ button:hover,select:hover{border-color:var(--verde)}
     <span id="msg"></span>
   </div>
 
-  <p class="versao">Versão de 23/11/2026 (1 fotógrafo por domingo)</p>
+  <p class="versao">Versão de 23/11/2026 (liderança da Santa Ceia dividida entre todos)</p>
 </div>
 
 <script>
@@ -110,6 +110,7 @@ var CEIA_TAM={               /* exceções por data, no formato 'AAAA-MM-DD':pes
 var SEMENTE=2026;            /* número do sorteio das folgas extras. Mude este número para sortear de novo */
 var FOTOGRAFOS=['Alefe','Lays','Andrei'];            /* quem faz fotografia nos cultos (1 por domingo, em rodízio) */
 var SEM_FOTO_LIDER=['Lays','Andrei','Alefe'];        /* quem NÃO faz fotografia quando está como líder */
+var CEIA_LIDERES=['Wellington','Enzo','João','Andrei','Alefe','Lays'];  /* quem entra na rotação de líder da Santa Ceia (divisão justa entre eles) */
 /* ===== FIM DAS CONFIGURAÇÕES ===== */
 
 var P={'Wellington':270,'Enzo':175,'João':215,'Andrei':25,'Alefe':130,'Lays':320};
@@ -206,32 +207,33 @@ S.forEach(function(s){
   kc++;
 });
 
-/* 3b) Novos líderes: cada um lidera 1 Santa Ceia por ano (espalhadas no ano, nunca numa ceia em que está de folga) */
-var anos={};
+/* 3b) Liderança da ceia dividida de forma justa: lidera quem tem menos ceias no ano
+   (empate: quem está há mais tempo sem liderar). Ninguém lidera uma ceia em que está de folga.
+   Se o líder do dia for um líder em formação, o líder original vira mentor. */
+var ultLead={};
+NOMES.forEach(function(n){ultLead[n]=-1;});
+var contAno={};
 CE.forEach(function(c,i){
   var y=c.s.d.getUTCFullYear();
-  (anos[y]=anos[y]||[]).push(i);
-});
-Object.keys(anos).forEach(function(y){
-  var ids=anos[y],n=ids.length;
-  if(n<TR.length)return;   /* ano com poucas ceias (ex.: 2026) não entra */
-  TR.forEach(function(nome,k){
-    var alvo=Math.floor(n*(k+0.5)/TR.length);
-    for(var d=0;d<n;d++){
-      var achou=false;
-      [alvo+d,alvo-d].forEach(function(p){
-        if(achou||p<0||p>=n)return;
-        var c=CE[ids[p]];
-        if(c.novato||c.folga.indexOf(nome)>=0)return;
-        c.novato=nome;
-        achou=true;
-      });
-      if(achou)break;
-    }
+  if(!contAno[y]){contAno[y]={};NOMES.forEach(function(n){contAno[y][n]=0;});}
+  var cand=CEIA_LIDERES.filter(function(n){return c.folga.indexOf(n)<0;});
+  cand.sort(function(a,b){
+    return (contAno[y][a]-contAno[y][b])
+      ||(ultLead[a]-ultLead[b])
+      ||(NOMES.indexOf(a)-NOMES.indexOf(b));
   });
+  var esc=cand.length?cand[0]:c.lider;
+  contAno[y][esc]++;
+  ultLead[esc]=i;
+  if(TR.indexOf(esc)>=0){
+    c.novato=esc;          /* líder em formação; c.lider continua como mentor */
+  }else{
+    c.novato='';
+    c.lider=esc;           /* líder já formado */
+  }
 });
 
-/* 3c) Sorteio da folga extra (quem já estava de folga continua; só os líderes ficam protegidos) */
+/* 3c) Sorteio da folga extra (quem já estava de folga continua; só líder e mentor ficam protegidos) */
 var extraF={};
 NOMES.forEach(function(n){extraF[n]=0;});
 CE.forEach(function(c){
@@ -377,9 +379,11 @@ function render(){
     var mine=list.filter(function(s){return serves(s,sel);}).length;
     var tot=S.filter(function(s){return serves(s,sel);}).length;
     var lead=S.filter(function(s){return s.l===sel;}).length;
+    var leadCeia=S.filter(function(s){return s.ceia&&s.l===sel;}).length;
     st=metric(sel+' no mês',mine)
       +metric('Total no período',tot)
-      +metric(LEAD.indexOf(sel)>=0?'Como líder':'Como líder (formação)',lead);
+      +metric(LEAD.indexOf(sel)>=0?'Como líder':'Como líder (formação)',lead)
+      +metric('Líder em Santa Ceia',leadCeia);
     if(FOTOGRAFOS.indexOf(sel)>=0){
       st+=metric('Fotografia no mês',list.filter(function(s){return fotografa(s,sel);}).length);
     }
