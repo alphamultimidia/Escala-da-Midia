@@ -79,7 +79,7 @@ button:hover,select:hover{border-color:var(--verde)}
     <img id="logo" class="logo" alt="Logo" hidden>
     <h1>Escala da Mídia</h1>
   </div>
-  <p class="sub">Todo domingo: 1 líder e 2 apoios. Primeiro domingo do mês: Santa Ceia, com 4 pessoas trabalhando e 2 de folga; cada novo líder conduz 1 Santa Ceia por ano. Último domingo do mês: quem está em formação assume a liderança, acompanhado por um mentor. Fotografia: Alefe, Lays e Andrei (quando não estão como líderes). Novembro de 2026 a dezembro de 2027.</p>
+  <p class="sub">Todo domingo: 1 líder e 2 apoios. Primeiro domingo do mês: Santa Ceia, com 4 pessoas trabalhando e 2 de folga; cada novo líder conduz 1 Santa Ceia por ano. Último domingo do mês: quem está em formação assume a liderança, acompanhado por um mentor. Fotografia: 1 pessoa por domingo, em rodízio entre Alefe, Lays e Andrei (quem é líder no dia não fotografa). Novembro de 2026 a dezembro de 2027.</p>
 
   <div class="nav">
     <button id="prev" aria-label="Mês anterior">&#8249;</button>
@@ -96,7 +96,7 @@ button:hover,select:hover{border-color:var(--verde)}
     <span id="msg"></span>
   </div>
 
-  <p class="versao">Versão de 23/11/2026 (Santa Ceia com 4, novos líderes na ceia e fotografia)</p>
+  <p class="versao">Versão de 23/11/2026 (1 fotógrafo por domingo)</p>
 </div>
 
 <script>
@@ -108,7 +108,7 @@ var CEIA_PADRAO=4;           /* pessoas trabalhando na Santa Ceia, líder inclus
 var CEIA_TAM={               /* exceções por data, no formato 'AAAA-MM-DD':pessoas. Exemplo: '2027-01-03':5 */
 };
 var SEMENTE=2026;            /* número do sorteio das folgas extras. Mude este número para sortear de novo */
-var FOTOGRAFOS=['Alefe','Lays','Andrei'];            /* quem faz fotografia nos cultos */
+var FOTOGRAFOS=['Alefe','Lays','Andrei'];            /* quem faz fotografia nos cultos (1 por domingo, em rodízio) */
 var SEM_FOTO_LIDER=['Lays','Andrei','Alefe'];        /* quem NÃO faz fotografia quando está como líder */
 /* ===== FIM DAS CONFIGURAÇÕES ===== */
 
@@ -155,7 +155,7 @@ for(var i=0;i<58;i++){
     d:new Date(Date.UTC(2026,10,22+i*7)),
     l:CYC[i%6][0],
     a:CYC[i%6][1].slice(),
-    treino:false,ceia:false,folga:[],m:''
+    treino:false,ceia:false,folga:[],m:'',foto:''
   });
 }
 
@@ -258,6 +258,20 @@ CE.forEach(function(c){
   s.ceia=true;
 });
 
+/* ----- 3d) Fotografia: 1 pessoa por domingo, em rodízio (quem fez menos fotos e está há mais tempo sem fotografar) ----- */
+var fotoCont={},fotoUlt={};
+FOTOGRAFOS.forEach(function(n){fotoCont[n]=0;fotoUlt[n]=-1;});
+S.forEach(function(s,idx){
+  var cand=[s.l].concat(s.a).filter(function(n){
+    if(FOTOGRAFOS.indexOf(n)<0)return false;
+    if(s.l===n&&SEM_FOTO_LIDER.indexOf(n)>=0)return false;
+    return true;
+  });
+  cand.sort(function(a,b){return (fotoCont[a]-fotoCont[b])||(fotoUlt[a]-fotoUlt[b]);});
+  s.foto=cand.length?cand[0]:'';
+  if(s.foto){fotoCont[s.foto]++;fotoUlt[s.foto]=idx;}
+});
+
 /* ----- 4) Meses disponíveis e estado ----- */
 var M=[];
 S.forEach(function(s){
@@ -301,11 +315,9 @@ function av(n){
   if(u)return '<span class="av"><img src="'+u+'" alt="'+n+'"></span>';
   return '<span class="av" style="--h:'+P[n]+'">'+n.slice(0,2).toUpperCase()+'</span>';
 }
-/* Fotografia: quem é fotógrafo e não está como líder (quando a regra proíbe) */
+/* Fotografia: só quem foi escolhido para aquele domingo */
 function fotografa(s,n){
-  if(FOTOGRAFOS.indexOf(n)<0)return false;
-  if(s.l===n&&SEM_FOTO_LIDER.indexOf(n)>=0)return false;
-  return true;
+  return s.foto===n;
 }
 function rowHtml(n,kind,s){
   var c='row';
@@ -369,7 +381,7 @@ function render(){
       +metric('Total no período',tot)
       +metric(LEAD.indexOf(sel)>=0?'Como líder':'Como líder (formação)',lead);
     if(FOTOGRAFOS.indexOf(sel)>=0){
-      st+=metric('Fotografia no mês',list.filter(function(s){return serves(s,sel)&&fotografa(s,sel);}).length);
+      st+=metric('Fotografia no mês',list.filter(function(s){return fotografa(s,sel);}).length);
     }
   }else{
     st+=metric('Santa Ceias no período',S.filter(function(s){return s.ceia;}).length)
@@ -399,6 +411,7 @@ el('cards').onclick=function(e){
     +'Data: '+fdata(s)+', domingo'+tipo+'\n'
     +'Líder: '+s.l+'\n'
     +'Equipe: '+s.a.join(', ')+'\n'
+    +(s.foto?'Fotografia: '+s.foto+'\n':'')
     +'Meu nome: '+sel+'\n'
     +'Motivo: ');
 };
